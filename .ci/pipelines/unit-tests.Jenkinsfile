@@ -8,9 +8,6 @@ pipeline {
         timeout(time: 1, unit: 'HOURS')
     }
 
-    environment {
-    }
-
     stages {
         stage('Unit Tests') {
             steps {
