@@ -1,7 +1,3 @@
-// This library overrides the default checkout behavior to enable sleep+retries if there are errors
-// Added to help overcome some recurring github connection issues
-@Library('apm@current') _
-
 pipeline {
 
     agent {
@@ -10,10 +6,6 @@ pipeline {
 
     options {
         timeout(time: 1, unit: 'HOURS')
-    }
-
-    tools {
-        go 'go-1.16'
     }
 
     environment {
@@ -28,7 +20,7 @@ pipeline {
     stages {
         stage('Unit Tests') {
             steps {
-                sh 'make unit'
+                sh 'make -C .ci TARGET=unit CI_IMAGE=golang:1.16 ci'
             }
         }
     }
