@@ -59,7 +59,6 @@ func (wh *validatingWebhook) InjectDecoder(d *admission.Decoder) error {
 }
 
 func (wh *validatingWebhook) validateCreate(es esv1.Elasticsearch) error {
-	eslog.V(1).Info("create: attempting to see if es instance is managed", "namespace", es.Namespace, "managed", wh.managedNamespaces)
 	// If this Elasticsearch instance is not within the set of managed namespaces
 	// for this operator ignore this request.
 	if !slices.Contains(wh.managedNamespaces, es.Namespace) {
@@ -71,7 +70,6 @@ func (wh *validatingWebhook) validateCreate(es esv1.Elasticsearch) error {
 }
 
 func (wh *validatingWebhook) validateUpdate(prev esv1.Elasticsearch, curr esv1.Elasticsearch) error {
-	eslog.V(1).Info("update: attempting to see if es instance is managed", "namespace", curr.Namespace, "managed", wh.managedNamespaces)
 	// If this Elasticsearch instance is not within the set of managed namespaces
 	// for this operator ignore this request.
 	if !slices.Contains(wh.managedNamespaces, curr.Namespace) {
@@ -93,6 +91,7 @@ func (wh *validatingWebhook) validateUpdate(prev esv1.Elasticsearch, curr esv1.E
 	return ValidateElasticsearch(curr, wh.exposedNodeLabels)
 }
 
+// Handle is called when any request is sent to the webhook, satisfying the admission.Handler interface.
 func (wh *validatingWebhook) Handle(_ context.Context, req admission.Request) admission.Response {
 	es := &esv1.Elasticsearch{}
 	err := wh.decoder.DecodeRaw(req.Object, es)
@@ -123,6 +122,7 @@ func (wh *validatingWebhook) Handle(_ context.Context, req admission.Request) ad
 	return admission.Allowed("")
 }
 
+// ValidateElasticsearch validates an elasticsearch instance against a set of validation funcs.
 func ValidateElasticsearch(es esv1.Elasticsearch, exposedNodeLabels NodeLabels) error {
 	errs := check(es, validations(exposedNodeLabels))
 	if len(errs) > 0 {
