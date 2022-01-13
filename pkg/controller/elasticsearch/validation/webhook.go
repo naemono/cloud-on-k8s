@@ -59,6 +59,7 @@ func (wh *validatingWebhook) InjectDecoder(d *admission.Decoder) error {
 }
 
 func (wh *validatingWebhook) validateCreate(es esv1.Elasticsearch) error {
+	eslog.V(1).Info("create: attempting to see if es instance is managed", "namespace", es.Namespace, "managed", wh.managedNamespaces)
 	// If this Elasticsearch instance is not within the set of managed namespaces
 	// for this operator ignore this request.
 	if !slices.Contains(wh.managedNamespaces, es.Namespace) {
@@ -70,6 +71,7 @@ func (wh *validatingWebhook) validateCreate(es esv1.Elasticsearch) error {
 }
 
 func (wh *validatingWebhook) validateUpdate(prev esv1.Elasticsearch, curr esv1.Elasticsearch) error {
+	eslog.V(1).Info("update: attempting to see if es instance is managed", "namespace", curr.Namespace, "managed", wh.managedNamespaces)
 	// If this Elasticsearch instance is not within the set of managed namespaces
 	// for this operator ignore this request.
 	if !slices.Contains(wh.managedNamespaces, curr.Namespace) {
