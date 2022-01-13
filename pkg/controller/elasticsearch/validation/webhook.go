@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/strings/slices"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -29,11 +30,13 @@ const (
 
 var eslog = ulog.Log.WithName("es-validation")
 
-func RegisterWebhook(mgr ctrl.Manager, validateStorageClass bool, exposedNodeLabels NodeLabels) {
+// RegisterWebhook will register the elasticsearch validating webhook.
+func RegisterWebhook(mgr ctrl.Manager, validateStorageClass bool, nodeLabels NodeLabels, managedNamespaces []string) {
 	wh := &validatingWebhook{
 		client:               mgr.GetClient(),
 		validateStorageClass: validateStorageClass,
-		exposedNodeLabels:    exposedNodeLabels,
+		exposedNodeLabels:    nodeLabels,
+		managedNamespaces:    managedNamespaces,
 	}
 	eslog.Info("Registering Elasticsearch validating webhook", "path", webhookPath)
 	mgr.GetWebhookServer().Register(webhookPath, &webhook.Admission{Handler: wh})
@@ -44,6 +47,7 @@ type validatingWebhook struct {
 	decoder              *admission.Decoder
 	validateStorageClass bool
 	exposedNodeLabels    NodeLabels
+	managedNamespaces    []string
 }
 
 var _ admission.DecoderInjector = &validatingWebhook{}
@@ -55,13 +59,24 @@ func (wh *validatingWebhook) InjectDecoder(d *admission.Decoder) error {
 }
 
 func (wh *validatingWebhook) validateCreate(es esv1.Elasticsearch) error {
+	// If this Elasticsearch instance is not within the set of managed namespaces
+	// for this operator ignore this request.
+	if !slices.Contains(wh.managedNamespaces, es.Namespace) {
+		return nil
+	}
+
 	eslog.V(1).Info("validate create", "name", es.Name)
 	return ValidateElasticsearch(es, wh.exposedNodeLabels)
 }
 
 func (wh *validatingWebhook) validateUpdate(prev esv1.Elasticsearch, curr esv1.Elasticsearch) error {
-	eslog.V(1).Info("validate update", "name", curr.Name)
+	// If this Elasticsearch instance is not within the set of managed namespaces
+	// for this operator ignore this request.
+	if !slices.Contains(wh.managedNamespaces, curr.Namespace) {
+		return nil
+	}
 
+	eslog.V(1).Info("validate update", "name", curr.Name)
 	var errs field.ErrorList
 	for _, val := range updateValidations(wh.client, wh.validateStorageClass) {
 		if err := val(prev, curr); err != nil {

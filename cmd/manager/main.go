@@ -839,7 +839,7 @@ func setupWebhook(mgr manager.Manager, params operator.Parameters, clientset kub
 	}
 
 	// esv1 validating webhook is wired up differently, in order to access the k8s client
-	esvalidation.RegisterWebhook(mgr, params.ValidateStorageClass, params.ExposedNodeLabels)
+	esvalidation.RegisterWebhook(mgr, params.ValidateStorageClass, params.ExposedNodeLabels, params.ManagedNamespaces)
 
 	// wait for the secret to be populated in the local filesystem before returning
 	interval := time.Second * 1
