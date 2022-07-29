@@ -1,4 +1,4 @@
-instances:
+agents:
 - name: elastic-agent
   version: 8.2.3
   spec:
