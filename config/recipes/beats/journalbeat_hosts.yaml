@@ -19,7 +19,6 @@ spec:
     podTemplate:
       spec:
         automountServiceAccountToken: true # some older Beat versions are depending on this settings presence in k8s context
-        dnsPolicy: ClusterFirstWithHostNet
         containers:
         - name: journalbeat
           volumeMounts:
@@ -29,7 +28,7 @@ spec:
             name: run-journal
           - mountPath: /etc/machine-id
             name: machine-id
-        hostNetwork: true # Allows to provide richer host metadata
+        hostNetwork: false
         securityContext:
           runAsUser: 0
         terminationGracePeriodSeconds: 30

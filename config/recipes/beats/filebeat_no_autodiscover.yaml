@@ -22,8 +22,7 @@ spec:
       spec:
         automountServiceAccountToken: true
         terminationGracePeriodSeconds: 30
-        dnsPolicy: ClusterFirstWithHostNet
-        hostNetwork: true # Allows to provide richer host metadata
+        hostNetwork: false
         containers:
         - name: filebeat
           securityContext:

@@ -145,8 +145,7 @@ spec:
         serviceAccountName: filebeat
         automountServiceAccountToken: true
         terminationGracePeriodSeconds: 30
-        dnsPolicy: ClusterFirstWithHostNet
-        hostNetwork: true # Allows to provide richer host metadata
+        hostNetwork: false
         securityContext:
           runAsUser: 0
           # If using Red Hat OpenShift uncomment this:
