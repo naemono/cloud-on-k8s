@@ -12,10 +12,17 @@ import (
 var (
 	ElasticsearchState = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "eck_elasticsearch_healthy",
+			Name: "eck_elasticsearch_health_status",
 			Help: "Health of Elasticsearch cluster managed by ECK Operator",
 		},
-		[]string{"name", "namespace", "phase", "state"},
+		[]string{"name", "namespace", "color"},
+	)
+	ElasticsearchPhase = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "eck_elasticsearch_phase",
+			Help: "Phase of Elasticsearch cluster managed by ECK Operator",
+		},
+		[]string{"name", "namespace", "phase"},
 	)
 )
 

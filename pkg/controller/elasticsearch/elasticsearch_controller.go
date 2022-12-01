@@ -224,21 +224,21 @@ func reportMetrics(es *esv1.Elasticsearch) {
 	if es == nil {
 		return
 	}
-	healthMap := map[esv1.ElasticsearchHealth]float64{
-		esv1.ElasticsearchGreenHealth:   0.0,
-		esv1.ElasticsearchYellowHealth:  1.0,
-		esv1.ElasticsearchRedHealth:     2.0,
-		esv1.ElasticsearchUnknownHealth: 3.0,
+	colors := []string{"green", "yellow", "red"}
+	for _, color := range colors {
+		if string(es.Status.Health) == color {
+			metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), color).Set(1)
+			continue
+		}
+		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), color).Set(0)
 	}
-	switch es.Status.Health {
-	case esv1.ElasticsearchGreenHealth:
-		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), string(es.Status.Phase), "green").Set(healthMap[es.Status.Health])
-	case esv1.ElasticsearchYellowHealth:
-		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), string(es.Status.Phase), "yellow").Set(healthMap[es.Status.Health])
-	case esv1.ElasticsearchRedHealth:
-		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), string(es.Status.Phase), "red").Set(healthMap[es.Status.Health])
-	case esv1.ElasticsearchUnknownHealth:
-		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), string(es.Status.Phase), "unknown").Set(healthMap[es.Status.Health])
+	phases := []string{"Ready", "ApplyingChanges", "MigratingData", "Stalled", "Invalid"}
+	for _, phase := range phases {
+		if string(es.Status.Phase) == phase {
+			metrics.ElasticsearchPhase.WithLabelValues(es.GetName(), es.GetNamespace(), phase).Set(1)
+			continue
+		}
+		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), phase).Set(0)
 	}
 }
 
