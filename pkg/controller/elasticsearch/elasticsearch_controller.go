@@ -47,6 +47,7 @@ import (
 	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/k8s"
 	ulog "github.com/elastic/cloud-on-k8s/v2/pkg/utils/log"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/maps"
+	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/metrics"
 )
 
 const name = "elasticsearch-controller"
@@ -166,6 +167,8 @@ func (r *ReconcileElasticsearch) Reconcile(ctx context.Context, request reconcil
 		return reconcile.Result{}, tracing.CaptureError(ctx, err)
 	}
 
+	defer reportMetrics(&es)
+
 	if common.IsUnmanaged(ctx, &es) {
 		log.Info("Object is currently not managed by this controller. Skipping reconciliation", "namespace", es.Namespace, "es_name", es.Name)
 		return reconcile.Result{}, nil
@@ -215,6 +218,28 @@ func (r *ReconcileElasticsearch) Reconcile(ctx context.Context, request reconcil
 		k8s.EmitErrorEvent(r.recorder, err, &es, events.EventReconciliationError, "Reconciliation error: %v", err)
 	}
 	return results.WithError(err).Aggregate()
+}
+
+func reportMetrics(es *esv1.Elasticsearch) {
+	if es == nil {
+		return
+	}
+	healthMap := map[esv1.ElasticsearchHealth]float64{
+		esv1.ElasticsearchGreenHealth:   0.0,
+		esv1.ElasticsearchYellowHealth:  1.0,
+		esv1.ElasticsearchRedHealth:     2.0,
+		esv1.ElasticsearchUnknownHealth: 3.0,
+	}
+	switch es.Status.Health {
+	case esv1.ElasticsearchGreenHealth:
+		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), string(es.Status.Phase), "green").Set(healthMap[es.Status.Health])
+	case esv1.ElasticsearchYellowHealth:
+		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), string(es.Status.Phase), "yellow").Set(healthMap[es.Status.Health])
+	case esv1.ElasticsearchRedHealth:
+		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), string(es.Status.Phase), "red").Set(healthMap[es.Status.Health])
+	case esv1.ElasticsearchUnknownHealth:
+		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), string(es.Status.Phase), "unknown").Set(healthMap[es.Status.Health])
+	}
 }
 
 func (r *ReconcileElasticsearch) fetchElasticsearchWithAssociations(ctx context.Context, request reconcile.Request, es *esv1.Elasticsearch) (bool, error) {
