@@ -226,6 +226,7 @@ func reportMetrics(es *esv1.Elasticsearch) {
 	}
 	colors := []string{"green", "yellow", "red"}
 	for _, color := range colors {
+		log.Log.Info("metrics: comparing colors", "color", color, "es_health", string(es.Status.Health))
 		if string(es.Status.Health) == color {
 			metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), color).Set(1)
 			continue
@@ -234,6 +235,7 @@ func reportMetrics(es *esv1.Elasticsearch) {
 	}
 	phases := []string{"Ready", "ApplyingChanges", "MigratingData", "Stalled", "Invalid"}
 	for _, phase := range phases {
+		log.Log.Info("metrics: comparing phases", "phase", phase, "es_phase", string(es.Status.Phase))
 		if string(es.Status.Phase) == phase {
 			metrics.ElasticsearchPhase.WithLabelValues(es.GetName(), es.GetNamespace(), phase).Set(1)
 			continue
