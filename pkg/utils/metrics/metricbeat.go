@@ -20,18 +20,18 @@ func StartMetricBeat(clnt client.Client, metricsPort int, namespace, esURL, pass
 metricbeat.modules:
   # Metrics collected from a Prometheus endpoint
   - module: prometheus
-	period: 10s
-	metricsets: ["collector"]
-	hosts: ["elastic-operator-0:%d"]
-	metrics_path: /metrics
+    period: 10s
+    metricsets: ["collector"]
+    hosts: ["elastic-operator-0:%d"]
+    metrics_path: /metrics
 output:
-	elasticsearch:
-	  hosts:
-	  - %s
-	  password: %s
-	  ssl:
-		verification_mode: none
-	  username: elastic
+  elasticsearch:
+    hosts:
+    - %s
+    password: %s
+    ssl:
+      verification_mode: none
+    username: elastic
 `, metricsPort, esURL, password)
 	var cm corev1.ConfigMap
 	err := clnt.Get(context.Background(), types.NamespacedName{Name: "metricsbeat-config", Namespace: namespace}, &cm)
