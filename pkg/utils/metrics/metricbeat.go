@@ -81,7 +81,7 @@ output:
 									Name: "metricbeat-config",
 									VolumeSource: corev1.VolumeSource{
 										ConfigMap: &corev1.ConfigMapVolumeSource{
-											DefaultMode: pointer.Int32(0660),
+											DefaultMode: pointer.Int32(0640),
 											LocalObjectReference: corev1.LocalObjectReference{
 												Name: "metricsbeat-config",
 											},
