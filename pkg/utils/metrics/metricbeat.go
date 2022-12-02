@@ -81,7 +81,7 @@ output:
 									Name: "metricbeat-config",
 									VolumeSource: corev1.VolumeSource{
 										ConfigMap: &corev1.ConfigMapVolumeSource{
-											DefaultMode: pointer.Int32(0600),
+											DefaultMode: pointer.Int32(0660),
 											LocalObjectReference: corev1.LocalObjectReference{
 												Name: "metricsbeat-config",
 											},
@@ -98,7 +98,7 @@ output:
 									VolumeMounts: []corev1.VolumeMount{
 										{
 											Name:      "metricbeat-config",
-											MountPath: "/usr/shared/metricbeat/metricbeat.yml",
+											MountPath: "/usr/share/metricbeat/metricbeat.yml",
 											ReadOnly:  true,
 											SubPath:   "metricbeat.yml",
 										},
