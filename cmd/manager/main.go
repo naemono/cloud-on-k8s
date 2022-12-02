@@ -657,6 +657,15 @@ func startOperator(ctx context.Context) error {
 		Tracer:                    tracer,
 	}
 
+	if metricsPort != 0 {
+		log.Info("Starting Metricsbeat Prometheus deployment")
+		err = metrics.StartMetricBeat(clientset, metricsPort, params)
+		if err != nil {
+			log.Error(err, "failed to create metricsbeat deployment")
+			return err
+		}
+	}
+
 	if viper.GetBool(operator.EnableWebhookFlag) {
 		setupWebhook(ctx, mgr, params, clientset, exposedNodeLabels, managedNamespaces, tracer)
 	}
