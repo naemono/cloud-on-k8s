@@ -244,7 +244,7 @@ func reportMetrics(es *esv1.Elasticsearch) {
 			metrics.ElasticsearchPhase.WithLabelValues(es.GetName(), es.GetNamespace(), phase).Set(1)
 			continue
 		}
-		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), phase).Set(0)
+		metrics.ElasticsearchPhase.WithLabelValues(es.GetName(), es.GetNamespace(), phase).Set(0)
 	}
 }
 
