@@ -49,6 +49,7 @@ import (
 	"github.com/elastic/cloud-on-k8s/v2/pkg/dev"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/k8s"
 	ulog "github.com/elastic/cloud-on-k8s/v2/pkg/utils/log"
+	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/metrics"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/optional"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/set"
 )
@@ -301,6 +302,12 @@ func (d *defaultDriver) Reconcile(ctx context.Context) *reconciler.Results {
 		}
 		if requeue {
 			results.WithReconciliationState(defaultRequeue.WithReason("Updating remote cluster settings, re-queuing"))
+		}
+	}
+
+	if esReachable {
+		if _, ok := d.ES.Annotations["enable-metricbeat-prometheus"]; ok {
+			metrics.StartMetricBeat(d.Client, 8080, d.DefaultDriverParameters.OperatorParameters.OperatorNamespace, services.ExternalServiceName(d.ES.Name), controllerUser.Password)
 		}
 	}
 

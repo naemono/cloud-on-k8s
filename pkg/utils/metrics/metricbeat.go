@@ -8,13 +8,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/elastic/cloud-on-k8s/v2/pkg/controller/common/operator"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/pointer"
 )
 
-func StartMetricBeat(clientset kubernetes.Interface, metricsPort int, parameters operator.Parameters) error {
+func StartMetricBeat(clnt client.Client, metricsPort int, namespace, esURL, password string) error {
 	beatYml := fmt.Sprintf(`http:
   enabled: false
 metricbeat.modules:
@@ -24,20 +24,28 @@ metricbeat.modules:
 	metricsets: ["collector"]
 	hosts: ["elastic-operator-0:%d"]
 	metrics_path: /metrics
-`, metricsPort)
-	configmapClient := clientset.CoreV1().ConfigMaps(parameters.OperatorNamespace)
-	_, err := configmapClient.Get(context.Background(), "metricsbeat-config", metav1.GetOptions{})
+output:
+	elasticsearch:
+	  hosts:
+	  - %s
+	  password: %s
+	  ssl:
+		verification_mode: none
+	  username: elastic
+`, metricsPort, esURL, password)
+	var cm corev1.ConfigMap
+	err := clnt.Get(context.Background(), types.NamespacedName{Name: "metricsbeat-config", Namespace: namespace}, &cm)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			_, err = configmapClient.Create(context.Background(), &corev1.ConfigMap{
+			err = clnt.Create(context.Background(), &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "metricsbeat-config",
-					Namespace: parameters.OperatorNamespace,
+					Namespace: namespace,
 				},
 				Data: map[string]string{
 					"metricbeat.yml": beatYml,
 				},
-			}, metav1.CreateOptions{})
+			})
 			if err != nil {
 				return fmt.Errorf("while creating metricsbeat configmap: %w", err)
 			}
@@ -45,18 +53,28 @@ metricbeat.modules:
 			return fmt.Errorf("while getting metricsbeat-config configmap: %w", err)
 		}
 	}
-	c := clientset.AppsV1().Deployments(parameters.OperatorNamespace)
-	_, err = c.Get(context.Background(), "metricsbeat", metav1.GetOptions{})
+	var deployment v1.Deployment
+	err = clnt.Get(context.Background(), types.NamespacedName{Name: "metricsbeat", Namespace: namespace}, &deployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			_, err = c.Create(context.Background(), &v1.Deployment{
+			err = clnt.Create(context.Background(), &v1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "metricsbeat",
-					Namespace: parameters.OperatorNamespace,
+					Namespace: namespace,
 				},
 				Spec: v1.DeploymentSpec{
+					Selector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"app": "eck-operator-metricsbeat",
+						},
+					},
 					Replicas: pointer.Int32(1),
 					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								"app": "eck-operator-metricsbeat",
+							},
+						},
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
@@ -90,7 +108,7 @@ metricbeat.modules:
 						},
 					},
 				},
-			}, metav1.CreateOptions{})
+			})
 			if err != nil {
 				return fmt.Errorf("while creating metricsbeat deployment: %w", err)
 			}
