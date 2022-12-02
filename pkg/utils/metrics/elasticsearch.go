@@ -29,4 +29,5 @@ var (
 func init() {
 	// register the prometheus collector with the controller runtime registry
 	crmetrics.Registry.MustRegister(ElasticsearchState)
+	crmetrics.Registry.MustRegister(ElasticsearchPhase)
 }
