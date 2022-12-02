@@ -39,6 +39,7 @@ import (
 	"github.com/elastic/cloud-on-k8s/v2/pkg/controller/elasticsearch/certificates/transport"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/controller/elasticsearch/driver"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/controller/elasticsearch/label"
+	"github.com/elastic/cloud-on-k8s/v2/pkg/controller/elasticsearch/metrics"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/controller/elasticsearch/observer"
 	esreconcile "github.com/elastic/cloud-on-k8s/v2/pkg/controller/elasticsearch/reconcile"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/controller/elasticsearch/user"
@@ -47,7 +48,6 @@ import (
 	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/k8s"
 	ulog "github.com/elastic/cloud-on-k8s/v2/pkg/utils/log"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/maps"
-	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/metrics"
 )
 
 const name = "elasticsearch-controller"
@@ -169,7 +169,7 @@ func (r *ReconcileElasticsearch) Reconcile(ctx context.Context, request reconcil
 
 	defer func() {
 		log.Info("about to report metrics")
-		reportMetrics(&es)
+		metrics.ReportMetrics(ctx, &es)
 		log.Info("done reporting metrics")
 	}()
 
@@ -222,30 +222,6 @@ func (r *ReconcileElasticsearch) Reconcile(ctx context.Context, request reconcil
 		k8s.EmitErrorEvent(r.recorder, err, &es, events.EventReconciliationError, "Reconciliation error: %v", err)
 	}
 	return results.WithError(err).Aggregate()
-}
-
-func reportMetrics(es *esv1.Elasticsearch) {
-	if es == nil {
-		return
-	}
-	colors := []string{"green", "yellow", "red"}
-	for _, color := range colors {
-		log.Log.Info("metrics: comparing colors", "color", color, "es_health", string(es.Status.Health))
-		if string(es.Status.Health) == color {
-			metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), color).Set(1)
-			continue
-		}
-		metrics.ElasticsearchState.WithLabelValues(es.GetName(), es.GetNamespace(), color).Set(0)
-	}
-	phases := []string{"Ready", "ApplyingChanges", "MigratingData", "Stalled", "Invalid"}
-	for _, phase := range phases {
-		log.Log.Info("metrics: comparing phases", "phase", phase, "es_phase", string(es.Status.Phase))
-		if string(es.Status.Phase) == phase {
-			metrics.ElasticsearchPhase.WithLabelValues(es.GetName(), es.GetNamespace(), phase).Set(1)
-			continue
-		}
-		metrics.ElasticsearchPhase.WithLabelValues(es.GetName(), es.GetNamespace(), phase).Set(0)
-	}
 }
 
 func (r *ReconcileElasticsearch) fetchElasticsearchWithAssociations(ctx context.Context, request reconcile.Request, es *esv1.Elasticsearch) (bool, error) {
