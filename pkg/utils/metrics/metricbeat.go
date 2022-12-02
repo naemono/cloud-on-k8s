@@ -15,6 +15,16 @@ import (
 )
 
 func StartMetricBeat(clnt client.Client, metricsPort int, namespace, esURL, password string) error {
+	var pods corev1.PodList
+	err := clnt.List(context.Background(), &pods, client.InNamespace(namespace), client.MatchingLabels(map[string]string{
+		"statefulset.kubernetes.io/pod-name": "elastic-operator-0",
+	}))
+	if err != nil {
+		return fmt.Errorf("while listing pods: %w", err)
+	}
+	if len(pods.Items) == 0 {
+		return fmt.Errorf("couldn't find eck operator pod")
+	}
 	beatYml := fmt.Sprintf(`http:
   enabled: false
 metricbeat.modules:
@@ -22,7 +32,7 @@ metricbeat.modules:
   - module: prometheus
     period: 10s
     metricsets: ["collector"]
-    hosts: ["elastic-operator-0:%d"]
+    hosts: ["%s:%d"]
     metrics_path: /metrics
 output:
   elasticsearch:
@@ -32,9 +42,9 @@ output:
     ssl:
       verification_mode: none
     username: elastic
-`, metricsPort, esURL, password)
+`, pods.Items[0].Status.PodIP, metricsPort, esURL, password)
 	var cm corev1.ConfigMap
-	err := clnt.Get(context.Background(), types.NamespacedName{Name: "metricsbeat-config", Namespace: namespace}, &cm)
+	err = clnt.Get(context.Background(), types.NamespacedName{Name: "metricsbeat-config", Namespace: namespace}, &cm)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			err = clnt.Create(context.Background(), &corev1.ConfigMap{
