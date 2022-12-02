@@ -41,7 +41,7 @@ output:
     password: %s
     ssl:
       verification_mode: none
-    username: elastic
+    username: elastic-internal-monitoring
 `, pods.Items[0].Status.PodIP, metricsPort, esURL, password)
 	var cm corev1.ConfigMap
 	err = clnt.Get(context.Background(), types.NamespacedName{Name: "metricsbeat-config", Namespace: namespace}, &cm)

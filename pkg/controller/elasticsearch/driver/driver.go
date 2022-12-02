@@ -307,7 +307,11 @@ func (d *defaultDriver) Reconcile(ctx context.Context) *reconciler.Results {
 
 	if esReachable {
 		if _, ok := d.ES.Annotations["enable-metricbeat-prometheus"]; ok {
-			metrics.StartMetricBeat(d.Client, 8080, d.DefaultDriverParameters.OperatorParameters.OperatorNamespace, services.ExternalServiceURL(d.ES), controllerUser.Password)
+			pass, err := user.GetMonitoringUserPassword(d.Client, k8s.ExtractNamespacedName(&d.ES))
+			if err != nil {
+				return results.WithError(err)
+			}
+			metrics.StartMetricBeat(d.Client, 8080, d.DefaultDriverParameters.OperatorParameters.OperatorNamespace, services.ExternalServiceURL(d.ES), pass)
 		}
 	}
 
