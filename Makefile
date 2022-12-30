@@ -380,8 +380,8 @@ switch-tanzu:
 
 BUILD_PLATFORM ?= "linux/amd64,linux/arm64"
 
-buildah-login:
-	@ buildah login \
+podman-login:
+	@ podman login \
 		--username="$(shell vault read -field=username $(VAULT_ROOT_PATH)/docker-registry)" \
 		--password="$(shell vault read -field=password $(VAULT_ROOT_PATH)/docker-registry)" \
 		$(REGISTRY)
@@ -435,16 +435,14 @@ docker-build: go-generate generate-config-file
 docker-push:
 	@ hack/docker.sh -l -p $(OPERATOR_IMAGE)
 
-operator-buildah: go-generate generate-config-file buildah-login
-	buildah bud \
-		--isolation=chroot --storage-driver=vfs \
+operator-podman: go-generate generate-config-file podman-login
+	podman build \
 		--build-arg GO_LDFLAGS='$(GO_LDFLAGS)' \
 		--build-arg GO_TAGS='$(GO_TAGS)' \
 		--build-arg VERSION='$(VERSION)' \
 		--platform $(BUILD_PLATFORM) \
 		-t $(OPERATOR_IMAGE) .
-	buildah push \
-		--storage-driver=vfs \
+	podman push \
 		$(OPERATOR_IMAGE)
 
 purge-gcr-images:
@@ -503,17 +501,15 @@ e2e-docker-multiarch-build: go-generate
 		--push \
 		-t $(E2E_IMG) .
 
-e2e-buildah: go-generate buildah-login
-	buildah bud \
-		--isolation=chroot --storage-driver=vfs \
+e2e-podman: go-generate podman-login
+	podman build \
 		--platform $(BUILD_PLATFORM) \
 		--build-arg E2E_JSON='$(E2E_JSON)' \
 		--build-arg E2E_TAGS='$(E2E_TAGS)' \
 		-f test/e2e/Dockerfile \
 		-t $(E2E_IMG) \
 		.
-	buildah push \
-		--storage-driver=vfs \
+	podman push \
 		$(E2E_IMG)
 
 e2e-run: go-generate
