@@ -188,6 +188,7 @@ func (d *defaultDriver) Reconcile(ctx context.Context) *reconciler.Results {
 		return results.WithError(err)
 	}
 
+	log.Info("creating ES observer with trusted certs", "certs", displayX509(trustedHTTPCertificates))
 	observedState := d.Observers.ObservedStateResolver(
 		ctx,
 		d.ES,
@@ -368,6 +369,20 @@ func (d *defaultDriver) Reconcile(ctx context.Context) *reconciler.Results {
 
 	// reconcile StatefulSets and nodes configuration
 	return results.WithResults(d.reconcileNodeSpecs(ctx, esReachable, esClient, d.ReconcileState, *resourcesState, keystoreResources))
+}
+
+func displayX509(certs []*x509.Certificate) string {
+	var ret string
+	for _, cert := range certs {
+		ret += fmt.Sprintf(
+			"%s/%s/%s/%s",
+			cert.Issuer.String(),
+			cert.Subject.String(),
+			cert.NotBefore.String(),
+			cert.NotAfter.String(),
+		)
+	}
+	return ret
 }
 
 // newElasticsearchClient creates a new Elasticsearch HTTP client for this cluster using the provided user
