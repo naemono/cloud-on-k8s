@@ -13,12 +13,15 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/davecgh/go-spew/spew"
+
 	commonv1 "github.com/elastic/cloud-on-k8s/v2/pkg/apis/common/v1"
 	commonname "github.com/elastic/cloud-on-k8s/v2/pkg/controller/common/name"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/controller/common/reconciler"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/controller/common/tracing"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/controller/common/watches"
 	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/k8s"
+	ulog "github.com/elastic/cloud-on-k8s/v2/pkg/utils/log"
 )
 
 type Reconciler struct {
@@ -109,6 +112,8 @@ func (r Reconciler) ReconcileCAAndHTTPCerts(ctx context.Context) (*CertificatesS
 
 	// reconcile http public cert secret, which does not contain the private key
 	results.WithError(r.ReconcilePublicHTTPCerts(ctx, httpCertificates))
+	log := ulog.FromContext(ctx)
+	log.Info("returning slice of certs", "certificates", spew.Sdump(httpCertificates))
 	return httpCertificates, results
 }
 

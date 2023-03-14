@@ -120,6 +120,7 @@ func (r Reconciler) ReconcileInternalHTTPCerts(ctx context.Context, ca *CA, cust
 			caCertProvided = false
 		}
 
+		log.Info("comparing secret data", "current", secret.Data, "expected", expectedSecretData)
 		if !reflect.DeepEqual(secret.Data, expectedSecretData) {
 			needsUpdate = true
 			secret.Data = expectedSecretData
