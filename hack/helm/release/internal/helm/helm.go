@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"golang.org/x/exp/slices"
 	"google.golang.org/api/googleapi"
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/action"
@@ -40,6 +41,8 @@ type ReleaseConfig struct {
 	CredentialsFilePath string
 	// DryRun determines whether to run the release without making any changes to the GCS bucket or the Helm repository index file.
 	DryRun bool
+	// Excludes is a slice of Helm chart names to ignore and not release.
+	Excludes []string
 }
 
 // Release runs the Helm charts release.
@@ -53,7 +56,7 @@ func Release(conf ReleaseConfig) error {
 	}
 	defer os.RemoveAll(tempDir)
 
-	charts, err := readCharts(conf.ChartsDir)
+	charts, err := readCharts(conf.ChartsDir, conf.Excludes)
 	if err != nil {
 		return fmt.Errorf("while reading charts: %w", err)
 	}
@@ -70,7 +73,7 @@ func Release(conf ReleaseConfig) error {
 }
 
 // readCharts reads all Helm charts in the given directory based on the presence of the Chart.yaml file.
-func readCharts(dir string) ([]chart, error) {
+func readCharts(dir string, excludes []string) ([]chart, error) {
 	var charts []chart
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -91,6 +94,10 @@ func readCharts(dir string) ([]chart, error) {
 			var ch chart
 			if err = yaml.Unmarshal(fileBytes, &ch); err != nil {
 				return err
+			}
+			if slices.Contains(excludes, ch.Name) {
+				log.Printf("Excluding (%s) as it is in the excludes list", ch.Name)
+				return nil
 			}
 			ch.srcPath = filepath.Dir(path)
 			charts = append(charts, ch)
@@ -168,7 +175,7 @@ func copyChartToGCSBucket(ctx context.Context, conf ReleaseConfig, chart chart, 
 	}
 	defer chartPackageFile.Close()
 
-	// trail the first / from the repo url path
+	// trim the first / from the repo url path
 	chartArchiveDest := filepath.Join(strings.TrimPrefix(repoURL.Path, "/"), chart.Name, filepath.Base(chartPackagePath))
 
 	log.Printf("Writing chart archive to bucket path (%s)\n", chartArchiveDest)

@@ -15,6 +15,7 @@ Flags:
   -d, --dry-run                   Do not upload files to bucket, or update helm index (env: HELM_DRY_RUN) (default true)
       --enable-vault              Read 'credentials-file' from Vault (requires VAULT_ADDR and VAULT_TOKEN) (env: HELM_ENABLE_VAULT) (default true)
       --env string                Environment in which to release Helm charts ('dev' or 'prod') (env: HELM_ENV) (default "dev")
+      --excludes strings          Names of helm charts to exclude from release. (env: HELM_EXCLUDES)
   -h, --help                      help for release
 ```
 

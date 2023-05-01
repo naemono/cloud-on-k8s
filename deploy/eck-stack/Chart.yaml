@@ -9,18 +9,20 @@ dependencies:
   - name: eck-elasticsearch
     condition: eck-elasticsearch.enabled
     version: "0.4.0-SNAPSHOT"
-    repository: "https://helm.elastic.co"
+    repository: "file://../eck-elasticsearch"
   - name: eck-kibana
     condition: eck-kibana.enabled
     version: "0.4.0-SNAPSHOT"
-    repository: "https://helm.elastic.co"
+    repository: "file://../eck-kibana"
   - name: eck-agent
     condition: eck-agent.enabled
     version: "0.4.0-SNAPSHOT"
-    repository: "https://helm.elastic.co"
+    repository: "file://../eck-agent"
   - name: eck-fleet-server
     condition: eck-fleet-server.enabled
     version: "0.4.0-SNAPSHOT"
+    repository: "file://../eck-fleet-server"
   - name: eck-beats
     condition: eck-beats.enabled
     version: "0.3.0-SNAPSHOT"
+    repository: "file://../eck-beats"

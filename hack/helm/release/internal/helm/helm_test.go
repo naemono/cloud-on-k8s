@@ -61,13 +61,13 @@ func Test_readCharts(t *testing.T) {
 			for _, ch := range tt.chartsToWrite {
 				mustWriteChart(t, dir, ch)
 			}
-			got, err := readCharts(dir)
+			got, err := readCharts(dir, tt.excludes)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("readCharts() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !cmp.Equal(got, tt.want, cmpopts.IgnoreFields(chart{}, "fullPath")) {
-				t.Errorf("readCharts() = diff: %s", cmp.Diff(got, tt.want, cmpopts.IgnoreFields(chart{}, "fullPath")))
+			if !cmp.Equal(got, tt.want, cmpopts.IgnoreFields(chart{}, "srcPath")) {
+				t.Errorf("readCharts() = diff: %s", cmp.Diff(got, tt.want, cmpopts.IgnoreFields(chart{}, "srcPath")))
 			}
 		})
 	}

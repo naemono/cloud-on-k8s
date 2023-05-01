@@ -24,6 +24,7 @@ const (
 	credentialsFileFlag = "credentials-file"
 	dryRunFlag          = "dry-run"
 	envFlag             = "env"
+	excludesFlag        = "excludes"
 	enableVaultFlag     = "enable-vault"
 
 	// GCS Helm Buckets
@@ -67,6 +68,7 @@ func releaseCmd() *cobra.Command {
 					ChartsRepoURL:       chartsRepoURL,
 					CredentialsFilePath: viper.GetString(credentialsFileFlag),
 					DryRun:              viper.GetBool(dryRunFlag),
+					Excludes:            viper.GetStringSlice(excludesFlag),
 				})
 		},
 	}
@@ -101,6 +103,13 @@ func releaseCmd() *cobra.Command {
 		"Environment in which to release Helm charts ('dev' or 'prod') (env: HELM_ENV)",
 	)
 	_ = viper.BindPFlag(envFlag, flags.Lookup(envFlag))
+
+	flags.StringSlice(
+		excludesFlag,
+		[]string{},
+		"Names of helm charts to exclude from release. (env: HELM_EXCLUDES)",
+	)
+	_ = viper.BindPFlag(excludesFlag, flags.Lookup(excludesFlag))
 
 	flags.Bool(
 		enableVaultFlag,
