@@ -18,11 +18,12 @@ spec:
   {{- with .Values.count }}
   count: {{ . }}
   {{- end }}
-  {{- if or (not (hasKey .Values "elasticsearchRef")) (eq (len .Values.elasticsearchRef) 0) }}
+  {{- $esRef := or (.Values.elasticsearchRef) ((.Values.spec).elasticsearchRef) }}
+  {{- if eq (len $esRef) 0 }}
   {{ fail "An elasticsearchRef is required" }}
   {{- end }}
   elasticsearchRef:
-  {{- toYaml .Values.elasticsearchRef | nindent 4 }}
+  {{- toYaml $esRef| nindent 4 }}
   {{- with .Values.enterpriseSearchRef }}
   enterpriseSearchRef: {{ . }}
   {{- end }}
