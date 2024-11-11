@@ -5,6 +5,8 @@ tests:
   - it: should render daemonset properly when set
     set:
       spec:
+        elasticsearchRef:
+          name: quickstart
         daemonSet:
           podTemplate:
             spec:
@@ -21,17 +23,22 @@ tests:
           path: metadata.name
           value: quickstart-eck-agent
       - equal:
-          path: spec.version
-          value: 8.17.0-SNAPSHOT
+          path: spec
+          value:
+            elasticsearchRef:
+              name: quickstart
+            version: 8.17.0-SNAPSHOT
+            serviceAccountName: elastic-agent
+            daemonSet:
+              podTemplate:
+                spec:
+                  containers:
+                  - name: agent
+                    securityContext:
+                      runAsUser: 0
       - equal:
           path: spec.config
           value: null
-      - equal:
-          path: spec.daemonSet.podTemplate.spec.containers[0].name
-          value: agent
-      - equal:
-          path: spec.daemonSet.podTemplate.spec.containers[0].securityContext.runAsUser
-          value: 0
   - it: should render custom labels and annotations properly.
     set:
       labels:
@@ -39,6 +46,8 @@ tests:
       annotations:
         test: annotation
       spec:
+        elasticsearchRef:
+          name: quickstart
         daemonSet: {}
     release:
       name: quickstart
@@ -58,3 +67,151 @@ tests:
           value:
             eck.k8s.elastic.co/license: basic
             test: annotation
+  - it: should render complete deployment with all possible settings properly
+    set:
+      elasticsearchRef:
+        name: quickstart
+      deployment: {}
+      image: docker.elastic.co/beats/elastic-agent:8.17.0-SNAPSHOT
+      config:
+        revision: 2
+        agent:
+          monitoring:
+            enabled: true
+            use_output: monitoring
+            logs: true
+            metrics: true
+      secureSettings:
+        - secretName: my-secret
+      serviceAccount:
+        name: my-service-account
+      revisionHistoryLimit: 5
+      http:
+        service:
+          metadata:
+            labels:
+              test: label
+            annotations:
+              test: annotation
+      mode: fleet
+      fleetServerEnabled: false
+      policyID: 1234
+      kibanaRef:
+        name: kibana
+      fleetServerRef:
+        name: fleet-server
+    release:
+      name: quickstart
+    asserts:
+      - isKind:
+          of: Agent
+      - equal:
+          path: spec
+          value:
+            version: 8.17.0-SNAPSHOT
+            kibanaRef:
+              name: kibana
+            fleetServerRef:
+              name: fleet-server
+            elasticsearchRef:
+              name: quickstart
+            deployment: {}
+            image: docker.elastic.co/beats/elastic-agent:8.17.0-SNAPSHOT
+            mode: fleet
+            policyID: 1234
+            config:
+              revision: 2
+              agent:
+                monitoring:
+                  enabled: true
+                  use_output: monitoring
+                  logs: true
+                  metrics: true
+            secureSettings:
+              - secretName: my-secret
+            serviceAccountName: my-service-account
+            revisionHistoryLimit: 5
+            http:
+              service:
+                metadata:
+                  labels:
+                    test: label
+                  annotations:
+                    test: annotation
+  - it: should render configRef properly when set with empty deployment
+    set:
+      spec:
+        elasticsearchRef:
+          name: quickstart
+        kibanaRef:
+          name: quickstart
+        deployment: {}
+        configRef:
+          name: my-config
+    release:
+      name: quickstart
+    asserts:
+      - isKind:
+          of: Agent
+      - equal:
+          path: spec
+          value:
+            version: 8.17.0-SNAPSHOT
+            elasticsearchRef:
+              name: quickstart
+            kibanaRef:
+              name: quickstart
+            deployment: {}
+            configRef:
+              name: my-config
+            serviceAccountName: elastic-agent
+  - it: should render empty statefulset
+    set:
+      spec:
+        elasticsearchRef:
+          name: quickstart
+        statefulSet: {}
+    release:
+      name: quickstart
+    asserts:
+      - isKind:
+          of: Agent
+      - equal:
+          path: spec
+          value:
+            version: 8.17.0-SNAPSHOT
+            elasticsearchRef:
+              name: quickstart
+            statefulSet: {}
+            serviceAccountName: elastic-agent
+  - it: should render non-empty statefulset
+    set:
+      spec:
+        elasticsearchRef:
+          name: quickstart
+        statefulSet:
+          podTemplate:
+            spec:
+              containers:
+              - name: agent
+                securityContext:
+                  runAsUser: 0
+    release:
+      name: quickstart
+    asserts:
+      - isKind:
+          of: Agent
+      - equal:
+          path: spec
+          value:
+            version: 8.17.0-SNAPSHOT
+            elasticsearchRef:
+              name: quickstart
+            statefulSet:
+              podTemplate:
+                spec:
+                  containers:
+                  - name: agent
+                    securityContext:
+                      runAsUser: 0
+            serviceAccountName: elastic-agent

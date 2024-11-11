@@ -12,40 +12,45 @@ metadata:
     {{- end }}
 spec:
   version: {{ required "A Kibana version is required" .Values.version }}
-  {{- with or (.Values.image) ((.Values.spec).image) }}
+  {{- with or ((.Values.spec).image) (.Values.image) }}
   image: {{ . }}
   {{- end }}
   {{- with .Values.count }}
   count: {{ . }}
   {{- end }}
-  {{- $esRef := or (.Values.elasticsearchRef) ((.Values.spec).elasticsearchRef) }}
-  {{- if eq (len $esRef) 0 }}
+  {{- $esRef := or ((.Values.spec).elasticsearchRef) (.Values.elasticsearchRef) }}
+  {{- if not ($esRef).name }}
   {{ fail "An elasticsearchRef is required" }}
   {{- end }}
   elasticsearchRef:
-  {{- toYaml $esRef| nindent 4 }}
-  {{- with .Values.enterpriseSearchRef }}
-  enterpriseSearchRef: {{ . }}
+  {{- toYaml $esRef | nindent 4 }}
+  {{- $entsearchRef := or ((.Values.spec).enterpriseSearchRef) (.Values.enterpriseSearchRef) }}
+  {{- if $entsearchRef }}
+  enterpriseSearchRef:
+  {{- toYaml $entsearchRef | nindent 4 }}
   {{- end }}
-  {{- with .Values.config }}
-  config: {{ . }}
+  {{- with or ((.Values.spec).config) (.Values.config) }}
+  config:
+    {{ toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.http }}
+  {{- with or ((.Values.spec).http) (.Values.http) }}
   http:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.podTemplate }}
-  podTemplate: {{ . }}
+  {{- with or ((.Values.spec).podTemplate) (.Values.podTemplate) }}
+  podTemplate:
+    {{ toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.revisionHistoryLimit }}
+  {{- with or ((.Values.spec).revisionHistoryLimit) (.Values.revisionHistoryLimit) }}
   revisionHistoryLimit: {{ . }}
   {{- end }}
-  {{- with .Values.secureSettings }}
-  secureSettings: {{ . }}
+  {{- with or ((.Values.spec).secureSettings) (.Values.secureSettings) }}
+  secureSettings:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.serviceAccountName }}
+  {{- with or ((.Values.spec).serviceAccountName) (.Values.serviceAccountName) }}
   serviceAccountName: {{ . }}
   {{- end }}
-  {{- with .Values.monitoring }}
+  {{- with or ((.Values.spec).monitoring) (.Values.monitoring) }}
   monitoring: {{ . }}
   {{- end }}

@@ -12,55 +12,86 @@ metadata:
     {{- end }}
 spec:
   version: {{ required "An Elastic Agent version is required" .Values.version }}
-  elasticsearchRefs: {{ required "An elasticsearchRefs is required" .Values.elasticsearchRefs }}
-  {{- with .Values.image }}
+  {{- $esRef := or ((.Values.spec).elasticsearchRef) (.Values.elasticsearchRef) }}
+  {{- if not ($esRef).name }}
+  {{ fail "An elasticsearchRef is required" }}
+  {{- end }}
+  elasticsearchRef:
+  {{- toYaml $esRef | nindent 4 }}
+  {{- with or ((.Values.spec).image) (.Values.image) }}
   image: {{ . }}
   {{- end }}
-  {{- if and (hasKey .Values "config") (hasKey .Values "configRef") }}
+  {{- $config := or ((.Values.spec).config) (.Values.config) }}
+  {{- $configRef := or ((.Values.spec).configRef) (.Values.configRef) }}
+  {{- if and $config $configRef }}
   {{ fail "At most one of config or configRef can be specified" }}
   {{- end }}
-  {{- with .Values.config }}
-  config: {{ . }}
+  {{- with $config }}
+  config:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.configRef }}
-  configRef: {{ . }}
+  {{- with $configRef }}
+  configRef:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.secureSettings }}
-  secureSettings: {{ . }}
+  {{- with or ((.Values.spec).secureSettings) (.Values.secureSettings) }}
+  secureSettings:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.serviceAccount }}
+  {{- with or ((.Values.spec).serviceAccount) (.Values.serviceAccount) }}
   serviceAccountName: {{ .name }}
   {{- end }}
-  {{- if and (not (hasKey .Values "daemonSet")) (not (hasKey .Values "deployment")) (not (hasKey .Values "statefulSet")) }}
+  {{- $ds := or (hasKey (.Values.spec) "daemonSet") (hasKey .Values "daemonSet") }}
+  {{- $deploy := or (hasKey (.Values.spec) "deployment") (hasKey .Values "deployment") }}
+  {{- $sts := or (hasKey (.Values.spec) "statefulSet") (hasKey .Values "statefulSet") }}
+  {{- if and (not $ds) (not $deploy) (not $sts) }}
   {{ fail "At least one of daemonSet or deployment or statefulSet is required" }}
   {{- end }}
-  {{- with .Values.daemonSet }}
-  daemonSet: {{ . }}
+  {{- if $ds }}
+  daemonSet:
+    {{- if not (or ((.Values.spec).daemonSet) (.Values.daemonSet)) }}
+    {}
+    {{- else }}
+    {{- toYaml (or ((.Values.spec).daemonSet) (.Values.daemonSet)) | nindent 4 }}
+    {{- end }}
   {{- end }}
-  {{- with .Values.deployment }}
-  deployment: {{ . }}
+  {{- if $deploy }}
+  deployment:
+    {{- if not (or ((.Values.spec).deployment) (.Values.deployment)) }}
+    {}
+    {{- else }}
+    {{- toYaml (or ((.Values.spec).deployment) (.Values.deployment)) | nindent 4 }}
+    {{- end }}
   {{- end }}
-  {{- with .Values.statefulSet }}
-  statefulSet: {{ . }}
+  {{- if $sts }}
+  statefulSet:
+    {{- if not (or ((.Values.spec).statefulSet) (.Values.statefulSet)) }}
+    {}
+    {{- else }}
+    {{- toYaml (or ((.Values.spec).statefulSet) (.Values.statefulSet)) | nindent 4 }}
+    {{- end }}
   {{- end }}
-  {{- with .Values.revisionHistoryLimit }}
+  {{- with or ((.Values.spec).revisionHistoryLimit) (.Values.revisionHistoryLimit) }}
   revisionHistoryLimit: {{ . }}
   {{- end }}
-  {{- with .Values.http }}
-  http: {{ . }}
+  {{- with or ((.Values.spec).http) (.Values.http) }}
+  http:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.mode }}
+  {{- with or ((.Values.spec).mode) (.Values.mode) }}
   mode: {{ . }}
   {{- end }}
-  {{- with .Values.fleetServerEnabled }}
+  {{- with or ((.Values.spec).fleetServerEnabled) (.Values.fleetServerEnabled) }}
   fleetServerEnabled: {{ . }}
   {{- end }}
-  {{- with .Values.policyID }}
+  {{- with or ((.Values.spec).policyID) (.Values.policyID) }}
   policyID: {{ . }}
   {{- end }}
-  {{- with .Values.kibanaRef }}
-  kibanaRef: {{ . }}
+  {{- with or ((.Values.spec).kibanaRef) (.Values.kibanaRef) }}
+  kibanaRef:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.fleetServerRef }}
-  fleetServerRef: {{ . }}
+  {{- with or ((.Values.spec).fleetServerRef) (.Values.fleetServerRef) }}
+  fleetServerRef:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
