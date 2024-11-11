@@ -12,13 +12,17 @@ metadata:
     {{- end }}
 spec:
   version: {{ required "A Kibana version is required" .Values.version }}
-  {{- with .Values.image }}
+  {{- with or (.Values.image) ((.Values.spec).image) }}
   image: {{ . }}
   {{- end }}
   {{- with .Values.count }}
   count: {{ . }}
   {{- end }}
-  elasticsearchRef: {{ required "An elasticsearchRef is required" .Values.elasticsearchRef }}
+  {{- if or (not (hasKey .Values "elasticsearchRef")) (eq (len .Values.elasticsearchRef) 0) }}
+  {{ fail "An elasticsearchRef is required" }}
+  {{- end }}
+  elasticsearchRef:
+  {{- toYaml .Values.elasticsearchRef | nindent 4 }}
   {{- with .Values.enterpriseSearchRef }}
   enterpriseSearchRef: {{ . }}
   {{- end }}
@@ -26,7 +30,8 @@ spec:
   config: {{ . }}
   {{- end }}
   {{- with .Values.http }}
-  http: {{ . }}
+  http:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   {{- with .Values.podTemplate }}
   podTemplate: {{ . }}
