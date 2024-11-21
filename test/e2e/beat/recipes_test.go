@@ -254,8 +254,12 @@ func runBeatRecipe(
 			beatBuilder = customize(beatBuilder)
 		}
 
+		typ := beatcommon.Type(beatBuilder.Beat.Spec.Type)
+		if typ == beatcommon.Type("metricbeat") {
+			typ = beatcommon.Type("monitoring")
+		}
 		return beatBuilder.
-			WithESValidations(beat.HasEventFromBeat(beatcommon.Type(beatBuilder.Beat.Spec.Type)))
+			WithESValidations(beat.HasEventFromBeat(typ))
 	}
 
 	helper.RunFile(t, filePath, namespace, suffix, additionalObjects, transformationsWrapped)
