@@ -28,17 +28,13 @@ const (
 
 var (
 	DefaultMemoryReqs   = resource.MustParse("1Gi")
-	DefaultCPUReqs      = resource.MustParse("500m")
-	DefaultMemoryLimits = resource.MustParse("4Gi")
-	DefaultCPULimits    = resource.MustParse("1000m")
+	DefaultMemoryLimits = resource.MustParse("1Gi")
 	DefaultResources    = corev1.ResourceRequirements{
 		Requests: map[corev1.ResourceName]resource.Quantity{
 			corev1.ResourceMemory: DefaultMemoryReqs,
-			corev1.ResourceCPU:    DefaultCPUReqs,
 		},
 		Limits: map[corev1.ResourceName]resource.Quantity{
 			corev1.ResourceMemory: DefaultMemoryLimits,
-			corev1.ResourceCPU:    DefaultCPULimits,
 		},
 	}
 )
