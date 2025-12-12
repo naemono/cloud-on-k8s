@@ -180,7 +180,7 @@ func TestImageRepository(t *testing.T) {
 			name:    "Package registry image",
 			image:   PackageRegistryImage,
 			version: "1.0.0",
-			want:    testRegistry + "/package-registry/distribution:lite-1.0.0",
+			want:    testRegistry + "/package-registry/distribution:lite-1.0.0-ubi",
 		},
 	}
 

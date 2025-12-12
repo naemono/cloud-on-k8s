@@ -105,9 +105,11 @@ func ImageRepository(img Image, ver version.Version) string {
 	}
 
 	// If the image is for the package registry, we want to always
-	// default to using the 'lite' image.
+	// default to using the 'lite' image, and the UBI image.
+	// Note: The UBI image only began being created in 9.2.2, which is the minimum
+	// version supported by ECK.
 	if img.Name() == PackageRegistryImage.Name() {
-		return fmt.Sprintf("%s/%s%s:lite-%s", containerRegistry, image, suffix, ver)
+		return fmt.Sprintf("%s/%s%s:lite-%s-ubi", containerRegistry, image, suffix, ver)
 	}
 
 	return fmt.Sprintf("%s/%s%s:%s", containerRegistry, image, suffix, ver)
